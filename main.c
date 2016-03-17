@@ -14,10 +14,16 @@
 #include "Segments.h" 
 
 extern void initializeLED_IO			(void);
+extern void initialize_Temp 			(void);
 extern void start_Thread_LED			(void);
+extern void start_Thread_Temp     (void);
 extern void Thread_LED(void const *argument);
 extern void Thread_Temp (void const *argument);
+
 extern osThreadId tid_Thread_LED;
+
+TIM_HandleTypeDef timerHandle;
+TIM_Base_InitTypeDef timerInit;
 
 void initGPIO(GPIO_TypeDef* GPIOx, uint16_t pins, uint16_t input);
 
@@ -85,12 +91,16 @@ int main (void) {
   SystemClock_Config();                     /* Configure the System Clock     */
 
 	/* User codes goes here*/
+	__HAL_RCC_TIM3_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
+	
 	initGPIO(GPIOA, 0x9FFF, 0);//Used as a select signal
 	initGPIO(GPIOC, 0xFFFF, 0);//Used to control segments
   initializeLED_IO();                       /* Initialize LED GPIO Buttons    */
+	initialize_Temp();
   start_Thread_LED();                       /* Create LED thread              */
+	start_Thread_Temp();
 	/* User codes ends here*/
   
 	osKernelStart();                          /* start thread execution         */

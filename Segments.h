@@ -43,7 +43,9 @@
 #define SEGMENT_THIRD		(uint16_t) GPIO_PIN_2
 #define SEGMENT_FOURTH	(uint16_t) GPIO_PIN_3
 
-void updateDisplay(int display);
+void updateDisplay(int display,float number);
+uint16_t getSegmentsKeypad(int digit, float number);
+void getSegmentsTemp(int digit);
 
 #endif
 
