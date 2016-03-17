@@ -22,9 +22,6 @@ extern void Thread_Temp (void const *argument);
 
 extern osThreadId tid_Thread_LED;
 
-TIM_HandleTypeDef timerHandle;
-TIM_Base_InitTypeDef timerInit;
-
 void initGPIO(GPIO_TypeDef* GPIOx, uint16_t pins, uint16_t input);
 
 void thread1 (void);
@@ -92,6 +89,7 @@ int main (void) {
 
 	/* User codes goes here*/
 	__HAL_RCC_TIM3_CLK_ENABLE();
+	__HAL_RCC_TIM2_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	

@@ -15,7 +15,7 @@ float rawValue = 0;
 float convertedValue = 0;
 int digit = 0;
 int test =100;
-extern TIM_HandleTypeDef timerHandle;
+TIM_HandleTypeDef timerHandle;
 
 
 /*----------------------------------------------------------------------------
