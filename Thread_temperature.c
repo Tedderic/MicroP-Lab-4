@@ -12,12 +12,10 @@ ADC_InitTypeDef ADCInit;
 ADC_ChannelConfTypeDef channelConfig;
 
 float rawValue = 0;
-float convertedValue = 0;
-int digit = 0;
 int test =100;
-TIM_HandleTypeDef timerHandle;
+int overHeat = 0;
 
-
+extern float convertedValue[3];
 /*----------------------------------------------------------------------------
  *      Create the thread within RTOS context
  *---------------------------------------------------------------------------*/
@@ -32,16 +30,17 @@ int start_Thread_Temp (void) {
 *      Thread  'LED_Thread': Toggles LED
  *---------------------------------------------------------------------------*/
 	void Thread_Temp (void const *argument) {
-		
-		HAL_TIM_Base_Init(&timerHandle);
-		HAL_TIM_Base_Start_IT(&timerHandle);
+	
 		while(1){
-						HAL_Delay(500);
+						osDelay(1000);
 						HAL_ADC_Start(&ADCHandleinit);
 						HAL_ADC_PollForConversion(&ADCHandleinit, 10);
 						rawValue = HAL_ADC_GetValue(&ADCHandleinit);
-						convertedValue = tempConv(rawValue);
-			
+						convertedValue[0] = tempConv(rawValue);
+						if(convertedValue[0] > 38)
+							overHeat = 1;
+						else 
+							overHeat = 0;
 						__HAL_ADC_CLEAR_FLAG(&ADCHandleinit,ADC_FLAG_EOC);
 			}
 	}
@@ -50,17 +49,6 @@ int start_Thread_Temp (void) {
  *---------------------------------------------------------------------------*/
 	void initialize_Temp (void)
 	{		
-		//Enable TIM3 interrupt
-		HAL_NVIC_EnableIRQ(TIM3_IRQn);
-		//Sets priority to maximum 
-		HAL_NVIC_SetPriority(TIM3_IRQn,1, 1);
-		
-		timerHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-		timerHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-		timerHandle.Init.Period = 4501;
-		timerHandle.Init.Prescaler = 5;
-		
-		timerHandle.Instance = TIM3;		
 		ADCInit.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
 		ADCInit.ContinuousConvMode = DISABLE;
 		ADCInit.DataAlign = ADC_DATAALIGN_RIGHT;
@@ -119,12 +107,7 @@ float tempConv(uint32_t voltage)
 	return temperature;
 }
 
-void TIM3_IRQHandler(void)
-{
-	test++;
-	updateDisplay(digit++%4, convertedValue);
-	HAL_TIM_IRQHandler(&timerHandle);	
-}
+
 /*----------------------------------------------------------------------------
  *      
  *---------------------------------------------------------------------------*/

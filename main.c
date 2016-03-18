@@ -15,20 +15,31 @@
 
 extern void initializeLED_IO			(void);
 extern void initialize_Temp 			(void);
+extern void initialize_Accel			(void);
+extern void initialize_Keypad			(void);
+
 extern void start_Thread_LED			(void);
 extern void start_Thread_Temp     (void);
-extern void Thread_LED(void const *argument);
-extern void Thread_Temp (void const *argument);
+extern void start_Thread_Accel    (void);
+extern void start_Thread_keypad		(void);
+
+extern void Thread_LED		(void const *argument);
+extern void Thread_Temp 	(void const *argument);
+extern void Thread_Accel 	(void const *argument);
+extern void Thread_keypad (void const *argument);
 
 extern osThreadId tid_Thread_LED;
-
+extern int keypad_value;
 void initGPIO(GPIO_TypeDef* GPIOx, uint16_t pins, uint16_t input);
 
 void thread1 (void);
 void thread2 (void);
-
+int valueType = 1;
+float convertedValue[3];
+osMutexId mutex;
+TIM_HandleTypeDef timerHandle;
 osThreadId thrdID1,thrdID2;
-
+int digit = 0;
 /**
 	These lines are mandatory to make CMSIS-RTOS RTX work with te new Cube HAL
 */
@@ -80,11 +91,9 @@ void SystemClock_Config(void) {
   * Main function
   */
 int main (void) {
-
+	//osMutexDef(mutex);
   osKernelInitialize();                     /* initialize CMSIS-RTOS          */
-
   HAL_Init();                               /* Initialize the HAL Library     */
-
   SystemClock_Config();                     /* Configure the System Clock     */
 
 	/* User codes goes here*/
@@ -93,12 +102,30 @@ int main (void) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	
+		//Enable TIM3 interrupt
+		HAL_NVIC_EnableIRQ(TIM3_IRQn);
+		//Sets priority to maximum 
+		HAL_NVIC_SetPriority(TIM3_IRQn,1, 1);
+		
+		timerHandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+		timerHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+		timerHandle.Init.Period = 4501;
+		timerHandle.Init.Prescaler = 5;
+		
+		timerHandle.Instance = TIM3;		
+		HAL_TIM_Base_Init(&timerHandle);
+		HAL_TIM_Base_Start_IT(&timerHandle);
 	initGPIO(GPIOA, 0x9FFF, 0);//Used as a select signal
 	initGPIO(GPIOC, 0xFFFF, 0);//Used to control segments
   initializeLED_IO();                       /* Initialize LED GPIO Buttons    */
 	initialize_Temp();
-  start_Thread_LED();                       /* Create LED thread              */
+	initialize_Accel();
+	initialize_Keypad();
+  
+	start_Thread_LED();                       /* Create LED thread              */
 	start_Thread_Temp();
+	start_Thread_Accel();
+	start_Thread_keypad();
 	/* User codes ends here*/
   
 	osKernelStart();                          /* start thread execution         */
@@ -119,4 +146,18 @@ void initGPIO(GPIO_TypeDef* GPIOx, uint16_t pins, uint16_t input)
 
 	//Enable GPIO	
 	HAL_GPIO_Init(GPIOx, &GPIOInit);
+}
+
+void TIM3_IRQHandler(void)
+{
+	/*******Mutex*********/
+	osMutexWait(mutex, 100);
+	
+	if(keypad_value<4 && keypad_value>0)
+		valueType = keypad_value;
+	
+	osMutexRelease(mutex);
+	/*******Mutex*********/
+	updateDisplay(digit++%4, convertedValue[valueType-1]);
+	HAL_TIM_IRQHandler(&timerHandle);	
 }

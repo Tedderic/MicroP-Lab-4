@@ -9,6 +9,8 @@ uint16_t segArray[20] = {SEGMENT_ZERO, SEGMENT_ONE, SEGMENT_TWO, SEGMENT_THREE,
 												SEGMENT_FIVE_D, SEGMENT_SIX_D, SEGMENT_SEVEN_D, 
 												SEGMENT_EIGHT_D, SEGMENT_NINE_D};
 
+extern int overHeat;
+int displayDelay = 0;
 uint16_t getSegments(int digit, float number)
 {
 	int temp = 0;
@@ -75,41 +77,54 @@ uint16_t getSegments(int digit, float number)
 	}
 }
 
-void getSegmentsTemp(int digit)
-{
-	
-}
-
 //Sets ad reset each select pin as well as the pins for each segement
 //Also insert delay such that digits appear as constant to the eye
 void updateDisplay(int display, float number)
 {			
-	if(display == 0)
+	if(overHeat)
+		displayDelay++;
+	else
+		displayDelay = 0;
+	
+	if(displayDelay < 400)
 	{
-		HAL_GPIO_WritePin(GPIOA,SEGMENT_FOURTH,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOA,SEGMENT_FIRST,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
+		if(display == 0)
+		{
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_FOURTH,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_FIRST,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
+		}
+		else if(display == 1)
+		{
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_FIRST,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_SECOND,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
+		}
+		else if(display == 2)
+		{
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_SECOND,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_THIRD,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
+		}
+		else if(display == 3)
+		{
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_THIRD,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOA,SEGMENT_FOURTH,GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC,SEGMENT_DEGREE,GPIO_PIN_SET);
+		}
 	}
-	else if(display == 1)
+	else
 	{
 		HAL_GPIO_WritePin(GPIOA,SEGMENT_FIRST,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOA,SEGMENT_SECOND,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
-	}
-	else if(display == 2)
-	{
 		HAL_GPIO_WritePin(GPIOA,SEGMENT_SECOND,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOA,SEGMENT_THIRD,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOC,getSegments(display, number),GPIO_PIN_SET);
-	}
-	else if(display == 3)
-	{
 		HAL_GPIO_WritePin(GPIOA,SEGMENT_THIRD,GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOA,SEGMENT_FOURTH,GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(GPIOC,0xFFFF,GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOA,SEGMENT_FOURTH,GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOC,SEGMENT_DEGREE,GPIO_PIN_SET);
+		if(displayDelay > 800)
+			displayDelay = 0;
 	}
 }
